@@ -40,7 +40,7 @@ plugins: [
   new HtmlWebpackPlugin({
     filename: 'output.haml'
   }),
-  new HtmlWebpackSlimPlugin()
+  new HtmlWebpackHamlPlugin()
 ]  
 ```
 

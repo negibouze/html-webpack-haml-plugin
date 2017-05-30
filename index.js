@@ -20,13 +20,25 @@ HtmlWebpackHamlPlugin.prototype.apply = function (compiler) {
 };
 
 /**
+ * Is it processing target
+ * @param htmlPluginData
+ * @return bool processing target -> true
+ */
+HtmlWebpackHamlPlugin.prototype.isProcessingTarget = function (htmlPluginData) {
+  var target = ['haml'];
+  var ext = htmlPluginData.outputName.split('.').pop();
+  var fileType = htmlPluginData.plugin.options.filetype;
+  // If the plugin configuration set `filename` extension or `filetype` to 'haml'
+  return target.indexOf(ext) >= 0 || target.indexOf(fileType) >= 0;
+};
+
+/**
  * Process the generated HTML（before assets injection）
  */
 HtmlWebpackHamlPlugin.prototype.preProcessHtml = function (htmlPluginData, callback) {
   var self = this;
   var options = htmlPluginData.plugin.options;
-  // If the plugin configuration set `filename` ends with `.haml` or `filetype` to 'haml'
-  if (htmlPluginData.outputName.endsWith('.haml') || options.filetype === 'haml') {
+  if (self.isProcessingTarget(htmlPluginData)) {
     htmlPluginData.html = self.adjustElementsIndentation(htmlPluginData.html);
   }
   callback(null, htmlPluginData);
@@ -38,8 +50,8 @@ HtmlWebpackHamlPlugin.prototype.preProcessHtml = function (htmlPluginData, callb
 HtmlWebpackHamlPlugin.prototype.postProcessHtml = function (htmlPluginData, callback) {
   var self = this;
   var options = htmlPluginData.plugin.options;
-  // If the plugin configuration set `inject` to true and (set `filename` ends with `.haml` or `filetype` to 'haml')
-  if (options.inject && (htmlPluginData.outputName.endsWith('.haml') || options.filetype === 'haml')) {
+  // If the plugin configuration set `inject` to true and (set `filename` extension or `filetype` to 'haml')
+  if (options.inject && self.isProcessingTarget(htmlPluginData)) {
     if (options.filename === 'index.html') {
       htmlPluginData.outputName = 'index.haml';
       htmlPluginData.plugin.childCompilationOutputName = 'index.haml';
@@ -71,7 +83,11 @@ HtmlWebpackHamlPlugin.prototype.adjustElementsIndentation = function (html) {
  *    %meta{ 'http-equiv' => 'X-UA-Compatible', :content => 'IE=edge' }
  *    %meta{ :name => 'viewport', :content => 'width=device-width, initial-scale=1' }
  *    %meta{ :name => 'description', :content => 'Webpack App' }
- *        %title Webpack App
+ *        %title
+ *          - if i.odd?
+ *            HtmlWebpackPlugin example
+ *          - else
+ *            Webpack App
  *        %link{ :href => "styles.css", :rel => "stylesheet" }
  *  after
  *    %html{ :lang => 'en' }
@@ -80,7 +96,11 @@ HtmlWebpackHamlPlugin.prototype.adjustElementsIndentation = function (html) {
  *        %meta{ 'http-equiv' => 'X-UA-Compatible', :content => 'IE=edge' }
  *        %meta{ :name => 'viewport', :content => 'width=device-width, initial-scale=1' }
  *        %meta{ :name => 'description', :content => 'Webpack App' }
- *        %title Webpack App
+ *        %title
+ *          - if i.odd?
+ *            HtmlWebpackPlugin example
+ *          - else
+ *            Webpack App
  *        %link{ :href => "styles.css", :rel => "stylesheet" }
  * @param html htmlPluginData.html (Haml)
  */
@@ -91,7 +111,8 @@ HtmlWebpackHamlPlugin.prototype.adjustHeadElementsIndentation = function (html) 
   if (match) {
     var indent = match[2];
     var elements = match[3].split('\n').map(function(v) {
-      return indent + v.trim();
+      var m = /^([\s]*).*$/g.exec(v);
+      return (m[1] === '' ? indent : '') + v.replace(/[ 　]+$/, '');
     });
     html = html.replace(regExp, match[1] + elements.join('\n') + match[4]);
   }
@@ -190,7 +211,7 @@ HtmlWebpackHamlPlugin.prototype.injectAssetsIntoFile = function (htmlPluginData)
   var styles = self.headExtraction(html).map(function (e) {
     return e.match(/title>.*<\/title/i) ? '%title ' + options.title : e;
   });
-  var scripts = self.bodyExtraction(html);
+  var scripts = htmlPluginData.plugin.options.inject !== 'head' ? self.bodyExtraction(html) : [];
   var file = hasTemplate ? self.removeUnnecessaryTags(html) : self.defaultTemplate();
 
   styles = styles.map(self.createHamlTag);
@@ -200,11 +221,12 @@ HtmlWebpackHamlPlugin.prototype.injectAssetsIntoFile = function (htmlPluginData)
 };
 
 /**
- * Default template
+ * Is a valid template file set?
+ * @param filename template file name
  */
 HtmlWebpackHamlPlugin.prototype.hasTemplate = function (filename) {
   var ext = filename.split('.').pop();
-  return ext === 'haml' || ext === 'js';
+  return ['haml', 'js'].indexOf(ext) >= 0;
 };
 
 /**
@@ -227,7 +249,7 @@ HtmlWebpackHamlPlugin.prototype.headExtraction = function (html) {
   if (!match || match.length < 2) {
     return [];
   }
-  return match[1].split('><');
+  return match[1].split('><').filter(function(v) { return !v.startsWith('/') });
 };
 
 /**

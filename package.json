@@ -1,6 +1,6 @@
 {
   "name": "html-webpack-haml-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Simplifies creation of Haml files to serve your webpack bundles(Extension of html-webpack-plugin)",
   "main": "index.js",
   "scripts": {

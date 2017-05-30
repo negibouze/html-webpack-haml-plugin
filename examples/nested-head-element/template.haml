@@ -1,0 +1,17 @@
+!!! 5
+%html{ :lang => "en" }
+  %head
+    %meta{ :charset => "utf-8" }
+    <%= require('html-loader!./head.haml') %>
+    %title
+      - if i.odd?
+        HtmlWebpackPlugin example
+      - else
+        Webpack App
+  %body
+    #content
+      .left.column
+        %h2 nested head element
+        %p= print_information
+      .right.column
+        = render :partial => "sidebar"

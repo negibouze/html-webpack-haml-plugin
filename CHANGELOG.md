@@ -1,7 +1,7 @@
 Change History
 ==============
 
-v0.2.0 (May 25, 2017)
+v0.2.0 (May 30, 2017)
 ---
 
 ### Breaking Changes

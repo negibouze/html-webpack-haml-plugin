@@ -26,6 +26,10 @@ module.exports = {
       template: 'template.haml',
       filetype: 'haml'
     }),
+    new HtmlWebpackPlugin({
+      template: 'template-tab.haml',
+      filename: 'index-tab.haml'
+    }),
     new HtmlWebpackHamlPlugin()
   ]
 };

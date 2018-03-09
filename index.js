@@ -106,7 +106,7 @@ HtmlWebpackHamlPlugin.prototype.adjustElementsIndentation = function (html) {
  */
 HtmlWebpackHamlPlugin.prototype.adjustHeadElementsIndentation = function (html) {
   var self = this;
-  var regExp = /^( *%head\n)( *)([\s\S]*)(\n *%body)/im;
+  var regExp = /^([ |\t]*%head\n)([ |\t]*)([\s\S]*)(\n[ |\t]*%body)/im;
   var match = regExp.exec(html);
   if (match) {
     var indent = match[2];
@@ -147,7 +147,7 @@ HtmlWebpackHamlPlugin.prototype.adjustHeadElementsIndentation = function (html) 
  */
 HtmlWebpackHamlPlugin.prototype.adjustBodyElementsIndentation = function (html) {
   var self = this;
-  var regExp = /^( *)(%body.*\n)( *[\s\S]*)/im;
+  var regExp = /^([ |\t]*)(%body.*\n)([ |\t]*[\s\S]*)/im;
   var match = regExp.exec(html);
   if (match) {
     var padding = false;
@@ -167,7 +167,7 @@ HtmlWebpackHamlPlugin.prototype.adjustBodyElementsIndentation = function (html) 
         newElements.push(elm.trim());
         continue;
       }
-      var m = /^( *).*$/i.exec(elm);
+      var m = /^([ |\t]*).*$/i.exec(elm);
       // If the indentation is shallower than the body
       if (padding || (m && (m[1].length < indent.length))) {
         // After that, add indentation to all elements
@@ -282,7 +282,7 @@ HtmlWebpackHamlPlugin.prototype.removeUnnecessaryTags = function (html) {
  */
 HtmlWebpackHamlPlugin.prototype.injectAssets = function (html, head, body, assets) {
   var self = this;
-  var bodyRegExp = /^( *)(%body)\b/im;
+  var bodyRegExp = /^([ |\t]*)(%body)\b/im;
   var match = bodyRegExp.exec(html);
   if (match) {
     var headSpace = match[1];

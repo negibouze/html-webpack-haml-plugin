@@ -1,7 +1,8 @@
 var path = require('path');
+var AppCachePlugin = require('appcache-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var HtmlWebpackHamlPlugin = require('../..');
+var HtmlWebpackPugPlugin = require('../..');
 var webpackMajorVersion = require('webpack/package.json').version.split('.')[0];
 
 module.exports = {
@@ -12,27 +13,23 @@ module.exports = {
     filename: 'bundle.js'
   },
   module: {
-    loaders: [
-      { test: /\.css$/, loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader' }) },
-      { test: /\.png$/, loader: 'file-loader' }
+    rules: [
+      { test: /\.css$/, use: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader' }) },
+      { test: /\.png$/, use: 'file-loader?name=[name].[ext]' },
+      { test: /\.html$/, use: 'html-loader?-removeOptionalTags' }
     ]
   },
   plugins: [
+    new AppCachePlugin(),
     new ExtractTextPlugin('styles.css'),
     new HtmlWebpackPlugin({
       template: 'template.haml',
-      filename: 'layout.haml',
-      inject: 'head'
+      filetype: 'haml'
     }),
     new HtmlWebpackPlugin({
-      template: 'template2.haml',
-      filename: 'layout2.haml',
-      inject: 'body'
-    }),
-    new HtmlWebpackPlugin({
-      template: 'template2-tab.haml',
+      template: 'template-tab.haml',
       filename: 'index-tab.haml'
     }),
-    new HtmlWebpackHamlPlugin()
+    new HtmlWebpackPugPlugin()
   ]
 };

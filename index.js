@@ -68,10 +68,29 @@ HtmlWebpackHamlPlugin.prototype.postProcessHtml = function (htmlPluginData, call
  */
 HtmlWebpackHamlPlugin.prototype.adjustElementsIndentation = function (html) {
   var self = this;
+  html = self.deleteExtraNewlines(html);
   html = self.adjustHeadElementsIndentation(html);
   html = self.adjustBodyElementsIndentation(html);
   return html;
 };
+
+/**
+ * Delete trailing extra newlines
+ * e.g.
+ *  before
+ *   %div{ :id =>'footer' }
+ *     Footer content
+ *
+ *
+ *  after
+ *   %div{ :id =>'footer' }
+ *     Footer content
+ *
+ * @param html htmlPluginData.html (Haml)
+ */
+HtmlWebpackHamlPlugin.prototype.deleteExtraNewlines = function (html) {
+  return html.replace(/(\r?\n){2,}$/im, '$1');
+}
 
 /**
  * Adjust head elements indentation
@@ -147,7 +166,11 @@ HtmlWebpackHamlPlugin.prototype.adjustHeadElementsIndentation = function (html) 
  */
 HtmlWebpackHamlPlugin.prototype.adjustBodyElementsIndentation = function (html) {
   var self = this;
-  var regExp = /^([ |\t]*)(%body.*\n)([ |\t]*[\s\S]*)/im;
+  var regExp = function(html) {
+    var h = /^([ |\t]*)%head/im.exec(html);
+    var topSpace = h ? h[1] : '[ |\t]*';
+    return new RegExp('^(' + topSpace + ')(%body.*\\n)([ |\t]*[\\s\\S]*)', 'im');;
+  }(html);
   var match = regExp.exec(html);
   if (match) {
     var padding = false;
@@ -282,11 +305,19 @@ HtmlWebpackHamlPlugin.prototype.removeUnnecessaryTags = function (html) {
  */
 HtmlWebpackHamlPlugin.prototype.injectAssets = function (html, head, body, assets) {
   var self = this;
-  var bodyRegExp = /^([ |\t]*)(%body)\b/im;
-  var match = bodyRegExp.exec(html);
+  var regExp = function(html) {
+    var h = /^([ |\t]*)%head/im.exec(html);
+    var topSpace = h ? h[1] : '[ |\t]*';
+    return new RegExp('^(' + topSpace + ')(%body)\\b', 'im');;
+  }(html);
+  var match = regExp.exec(html);
   if (match) {
     var headSpace = match[1];
-    var hlSpace = headSpace.repeat(2);
+    var hlSpace = function(space, html) {
+      // delete extra space (left space of html tag)
+      var m = /^([ |\t]*)%html/im.exec(html);
+      return m ? space.replace(m[1], '') : space;
+    }(headSpace.repeat(2), html);
     if (head.length) {
       head = head.map(function(v) {
         return hlSpace + v;
@@ -295,7 +326,7 @@ HtmlWebpackHamlPlugin.prototype.injectAssets = function (html, head, body, asset
         head = [headSpace + '%head'].concat(head)
       }
       // Append assets to head element
-      html = html.replace(bodyRegExp, head.join('\n') + '\n' + match[0]);
+      html = html.replace(regExp, head.join('\n') + '\n' + match[0]);
     }
 
     if (body.length) {

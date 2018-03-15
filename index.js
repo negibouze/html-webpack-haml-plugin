@@ -9,14 +9,30 @@ function HtmlWebpackHamlPlugin (options) {
 HtmlWebpackHamlPlugin.prototype.apply = function (compiler) {
   var self = this;
   // Hook into the html-webpack-plugin processing
-  compiler.plugin('compilation', function (compilation) {
-    compilation.plugin('html-webpack-plugin-before-html-processing', function (htmlPluginData, callback) {
+  var beforeProcessing = {
+    name: 'html-webpack-plugin-before-html-processing',
+    cb: function (htmlPluginData, callback) {
       self.preProcessHtml(htmlPluginData, callback);
-    });
-    compilation.plugin('html-webpack-plugin-after-html-processing', function (htmlPluginData, callback) {
+    }
+  }
+  var afterProcessing = {
+    name: 'html-webpack-plugin-after-html-processing',
+    cb: function (htmlPluginData, callback) {
       self.postProcessHtml(htmlPluginData, callback);
+    }
+  }
+  if (compiler.hooks) {
+    // setup hooks for webpack 4
+    compiler.hooks.compilation.tap('HtmlWebpackHamlPlugin', function (compilation) {
+      compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync(beforeProcessing.name, beforeProcessing.cb);
+      compilation.hooks.htmlWebpackPluginAfterHtmlProcessing.tapAsync(afterProcessing.name, afterProcessing.cb);
     });
-  });
+  } else {
+    compiler.plugin('compilation', function (compilation) {
+      compilation.plugin(beforeProcessing.name, beforeProcessing.cb);
+      compilation.plugin(afterProcessing.name, afterProcessing.cb);
+    });
+  }
 };
 
 /**

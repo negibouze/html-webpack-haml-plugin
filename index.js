@@ -355,12 +355,12 @@ HtmlWebpackHamlPlugin.prototype.injectManifest = function (html, assets) {
   if (!assets.manifest) {
     return html;
   }
-  return html.replace(/^(%html.*)$/im, function (match, p1) {
+  return html.replace(/^([ |\t]*%html.*)$/im, function (match, p1) {
     // Append the manifest only if no manifest was specified
     if (/\s:manifest\s*=>/.test(match)) {
       return match;
     }
-    var regExp = /^(%html[^{]*)({[^}]*)?(})?$/i;
+    var regExp = /^([ |\t]*%html[^{]*)({[^}]*)?(})?$/i;
     var match = regExp.exec(p1);
     if (match) {
       var elements = match.filter(function(v) { return v != undefined });
